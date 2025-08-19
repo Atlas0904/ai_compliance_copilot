@@ -23,3 +23,12 @@
 👉 面試 demo：
 上傳一份 PDF 法規，問「客戶資料保存多久？」
 → 系統回答「依第 3.2 條，需保存 3 年（來源：文件第 5 頁）」，同時標註 檢測到 Email，自動遮罩。
+
+## 快速開始
+
+1. 安裝依賴：`pip install -r requirements.txt`
+2. 啟動服務：`uvicorn server:app --reload`
+3. 上傳文件：`curl -F "file=@sample.pdf" http://localhost:8000/upload`
+4. 提問：`curl "http://localhost:8000/ask?q=客戶資料保存多久"`
+
+服務會回覆最相關段落並自動遮罩 Email / Phone / ID。
