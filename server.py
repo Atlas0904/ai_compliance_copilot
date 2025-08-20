@@ -27,13 +27,22 @@ class KnowledgeBase:
             texts = [c["text"] for c in self.chunks]
             self.embeddings = self.vectorizer.fit_transform(texts)
 
-    def query(self, question: str, top_k: int = 1) -> List[Dict[str, str]]:
+    def query(self, question: str, top_k: int = 1, min_score: float = 0.0) -> List[Dict[str, str]]:
+        """Return top matching chunks with similarity score."""
         if not self.chunks:
             return []
         q_vec = self.vectorizer.transform([question])
         sims = cosine_similarity(q_vec, self.embeddings)[0]
         indices = sims.argsort()[::-1][:top_k]
-        return [self.chunks[i] for i in indices]
+        results: List[Dict[str, str]] = []
+        for i in indices:
+            score = sims[i]
+            if score < min_score:
+                continue
+            item = dict(self.chunks[i])
+            item["score"] = float(score)
+            results.append(item)
+        return results
 
 
 def mask_sensitive(text: str) -> str:
@@ -67,7 +76,7 @@ async def upload(file: UploadFile = File(...)) -> Dict[str, str]:
 
 @app.get("/ask")
 async def ask(q: str) -> Dict[str, List[str]]:
-    results = kb.query(q, top_k=1)
+    results = kb.query(q, top_k=1, min_score=0.2)
     if not results:
         return {"answer": "資料不足", "sources": []}
     best = results[0]
